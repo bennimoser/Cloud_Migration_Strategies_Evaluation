@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/0_On-Premises/">
+    <Project Path="0_On-Premises\ERP.Api\ERP.Api.csproj" />
+    <Project Path="0_On-Premises\ERP.Data\ERP.Data.csproj" Id="3b9c6d4e-2f5a-5b3c-9d7e-8f0a1b2c3d4e" />
+  </Folder>
+</Solution>
