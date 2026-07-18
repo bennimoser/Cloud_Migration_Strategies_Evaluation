@@ -12,11 +12,18 @@ namespace ERP.Api.Controllers
     {
         private readonly ErpContext _context;
         private readonly BestellungRepository _repository;
+        private readonly Bestellabwicklung _bestellabwicklung;
 
         public BestellungenController()
         {
             _context = new ErpContext();
             _repository = new BestellungRepository(_context);
+            _bestellabwicklung = new Bestellabwicklung(
+                _context,
+                new KundeRepository(_context),
+                new ArtikelRepository(_context),
+                new LagerbestandRepository(_context)
+            );
         }
 
         // GET api/bestellungen
@@ -42,11 +49,9 @@ namespace ERP.Api.Controllers
             if (anfrage.Positionen == null || anfrage.Positionen.Count == 0)
                 return BadRequest("Die Bestellung enthält keine Positionen.");
 
-            var service = new Bestellabwicklung(_context);
-
             try
             {
-                int bestellungId = service.BestellungAufgeben(anfrage);
+                int bestellungId = _bestellabwicklung.BestellungAufgeben(anfrage);
                 return Created($"api/bestellungen/{bestellungId}", new { id = bestellungId });
             }
             catch (KeyNotFoundException ex)

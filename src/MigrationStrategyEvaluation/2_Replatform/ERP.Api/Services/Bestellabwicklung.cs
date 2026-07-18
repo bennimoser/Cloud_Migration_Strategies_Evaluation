@@ -4,16 +4,27 @@ using System.Linq;
 using ERP.Api.Models;
 using ERP.Data;
 using ERP.Data.Entitaeten;
+using ERP.Data.Repositories;
 
 namespace ERP.Api.Services
 {
     public class Bestellabwicklung
     {
         private readonly ErpContext _context;
+        private readonly KundeRepository _kundeRepository;
+        private readonly ArtikelRepository _artikelRepository;
+        private readonly LagerbestandRepository _lagerbestandRepository;
 
-        public Bestellabwicklung(ErpContext context)
+        public Bestellabwicklung(
+            ErpContext context,
+            KundeRepository kundeRepository,
+            ArtikelRepository artikelRepository,
+            LagerbestandRepository lagerbestandRepository)
         {
             _context = context;
+            _kundeRepository = kundeRepository;
+            _artikelRepository = artikelRepository;
+            _lagerbestandRepository = lagerbestandRepository;
         }
 
         public int BestellungAufgeben(BestellungAnfrageDto anfrage)
@@ -21,17 +32,17 @@ namespace ERP.Api.Services
             if (anfrage == null || anfrage.Positionen == null || anfrage.Positionen.Count == 0)
                 throw new ArgumentException("Anfrage enthält keine Bestellpositionen.");
 
-            // 1. Kunde prüfen
-            var kunde = _context.Kunden.Find(anfrage.KundeId);
+            // 1. Kunde prüfen via KundeRepository
+            var kunde = _kundeRepository.FindById(anfrage.KundeId);
             if (kunde == null)
                 throw new KeyNotFoundException($"Kunde mit ID {anfrage.KundeId} wurde nicht gefunden.");
 
-            // 2. Alle Artikel und Lagerbestände vorab prüfen (vor dem Anlegen der Bestellung)
+            // 2. Alle Artikel und Lagerbestände vorab prüfen via ArtikelRepository + LagerbestandRepository
             var pruefListe = anfrage.Positionen.Select(p => new
             {
                 Anfrage = p,
-                Artikel = _context.Artikel.Find(p.ArtikelId),
-                Lagerbestand = _context.Lagerbestaende.FirstOrDefault(l => l.ArtikelId == p.ArtikelId)
+                Artikel = _artikelRepository.FindById(p.ArtikelId),
+                Lagerbestand = _lagerbestandRepository.FindByArtikelId(p.ArtikelId)
             }).ToList();
 
             foreach (var pos in pruefListe)
@@ -62,7 +73,7 @@ namespace ERP.Api.Services
                 }).ToList()
             };
 
-            // 4. Lagerbestände reduzieren
+            // 4. Lagerbestände reduzieren (EF6 trackt die via Repository geladenen Entitäten)
             foreach (var pos in pruefListe)
             {
                 pos.Lagerbestand.Menge -= pos.Anfrage.Menge;
