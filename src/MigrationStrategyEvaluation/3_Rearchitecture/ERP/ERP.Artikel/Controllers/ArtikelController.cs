@@ -5,6 +5,8 @@ using ArtikelEntity = ERP.Data.Entitaeten.Artikel;
 
 namespace ERP.Api.Controllers
 {
+    [ApiController]
+    [Route("api/artikel")]
     public class ArtikelController : ControllerBase
     {
         private readonly ErpContext _context;
@@ -24,7 +26,7 @@ namespace ERP.Api.Controllers
         }
 
         // GET api/artikel/5
-        [HttpGet]
+        [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
             var artikel = _repository.FindById(id);
@@ -51,7 +53,7 @@ namespace ERP.Api.Controllers
         }
 
         // PUT api/artikel/5
-        [HttpPut]
+        [HttpPut("{id}")]
         public IActionResult Put(int id, [FromBody] ArtikelEntity artikel)
         {
             if (artikel == null)

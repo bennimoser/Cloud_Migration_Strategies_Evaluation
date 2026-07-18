@@ -20,6 +20,13 @@ public class Program
         builder.Services.AddScoped<BestellungRepository>();
         builder.Services.AddScoped<Bestellabwicklung>();
 
+        builder.Services.AddHttpClient("erp-kunde", client =>
+            client.BaseAddress = new Uri("https+http://erp-kunde"));
+        builder.Services.AddHttpClient("erp-artikel", client =>
+            client.BaseAddress = new Uri("https+http://erp-artikel"));
+        builder.Services.AddHttpClient("erp-lagerstand", client =>
+            client.BaseAddress = new Uri("https+http://erp-lagerstand"));
+
         var app = builder.Build();
 
         app.MapDefaultEndpoints();

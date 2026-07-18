@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using ERP.Bestellung.Models;
 using ERP.Data;
 using ERP.Data.Entitaeten;
@@ -8,43 +9,52 @@ namespace ERP.Bestellung.Services
     public class Bestellabwicklung
     {
         private readonly ErpContext _context;
+        private readonly HttpClient _kundeClient;
+        private readonly HttpClient _artikelClient;
+        private readonly HttpClient _lagerstandClient;
 
-        public Bestellabwicklung(ErpContext context)
+        public Bestellabwicklung(ErpContext context, IHttpClientFactory httpClientFactory)
         {
             _context = context;
+            _kundeClient = httpClientFactory.CreateClient("erp-kunde");
+            _artikelClient = httpClientFactory.CreateClient("erp-artikel");
+            _lagerstandClient = httpClientFactory.CreateClient("erp-lagerstand");
         }
 
-        public int BestellungAufgeben(BestellungAnfrageDto anfrage)
+        public async Task<int> BestellungAufgeben(BestellungAnfrageDto anfrage)
         {
             if (anfrage == null || anfrage.Positionen == null || anfrage.Positionen.Count == 0)
                 throw new ArgumentException("Anfrage enthält keine Bestellpositionen.");
 
-            // 1. Kunde prüfen
-            var kunde = _context.Kunden.Find(anfrage.KundeId);
-            if (kunde == null)
+            // 1. Kunde prüfen via ERP.Kunde
+            var kundeResponse = await _kundeClient.GetAsync($"api/kunden/{anfrage.KundeId}");
+            if (!kundeResponse.IsSuccessStatusCode)
                 throw new KeyNotFoundException($"Kunde mit ID {anfrage.KundeId} wurde nicht gefunden.");
 
-            // 2. Alle Artikel und Lagerbestände vorab prüfen (vor dem Anlegen der Bestellung)
-            var pruefListe = anfrage.Positionen.Select(p => new
+            // 2. Alle Artikel und Lagerbestände vorab prüfen via ERP.Artikel + ERP.Lagerstand
+            var pruefListe = new List<PruefPosition>();
+            foreach (var p in anfrage.Positionen)
             {
-                Anfrage = p,
-                Artikel = _context.Artikel.Find(p.ArtikelId),
-                Lagerbestand = _context.Lagerbestaende.FirstOrDefault(l => l.ArtikelId == p.ArtikelId)
-            }).ToList();
+                var artikelResponse = await _artikelClient.GetAsync($"api/artikel/{p.ArtikelId}");
+                if (!artikelResponse.IsSuccessStatusCode)
+                    throw new KeyNotFoundException($"Artikel mit ID {p.ArtikelId} wurde nicht gefunden.");
+                var artikel = await artikelResponse.Content.ReadFromJsonAsync<ArtikelAntwort>()
+                    ?? throw new KeyNotFoundException($"Artikel mit ID {p.ArtikelId} wurde nicht gefunden.");
 
-            foreach (var pos in pruefListe)
-            {
-                if (pos.Artikel == null)
-                    throw new KeyNotFoundException($"Artikel mit ID {pos.Anfrage.ArtikelId} wurde nicht gefunden.");
-
-                if (pos.Lagerbestand == null)
+                var lagerResponse = await _lagerstandClient.GetAsync($"api/lagerbestand/{p.ArtikelId}");
+                if (!lagerResponse.IsSuccessStatusCode)
                     throw new InvalidOperationException(
-                        $"Kein Lagerbestand für Artikel '{pos.Artikel.Bezeichnung}' (ID {pos.Artikel.Id}) vorhanden.");
+                        $"Kein Lagerbestand für Artikel '{artikel.Bezeichnung}' (ID {p.ArtikelId}) vorhanden.");
+                var lager = await lagerResponse.Content.ReadFromJsonAsync<LagerbestandAntwort>()
+                    ?? throw new InvalidOperationException(
+                        $"Kein Lagerbestand für Artikel '{artikel.Bezeichnung}' (ID {p.ArtikelId}) vorhanden.");
 
-                if (pos.Lagerbestand.Menge < pos.Anfrage.Menge)
+                if (lager.Menge < p.Menge)
                     throw new InvalidOperationException(
-                        $"Lagerbestand für Artikel '{pos.Artikel.Bezeichnung}' nicht ausreichend. " +
-                        $"Verfügbar: {pos.Lagerbestand.Menge}, Angefordert: {pos.Anfrage.Menge}.");
+                        $"Lagerbestand für Artikel '{artikel.Bezeichnung}' nicht ausreichend. " +
+                        $"Verfügbar: {lager.Menge}, Angefordert: {p.Menge}.");
+
+                pruefListe.Add(new PruefPosition(p, artikel, lager));
             }
 
             // 3. Bestellung anlegen (erst nach ALLEN erfolgreichen Prüfungen)
@@ -60,18 +70,21 @@ namespace ERP.Bestellung.Services
                 }).ToList()
             };
 
-            // 4. Lagerbestände reduzieren
+            _context.Bestellungen.Add(bestellung);
+            _context.SaveChanges();
+
+            // 4. Lagerbestände reduzieren via ERP.Lagerstand (nach erfolgreich angelegter Bestellung)
             foreach (var pos in pruefListe)
             {
-                pos.Lagerbestand.Menge -= pos.Anfrage.Menge;
+                var neuerBestand = new { Menge = pos.Lager.Menge - pos.Anfrage.Menge, pos.Lager.Mindestbestand };
+                await _lagerstandClient.PutAsJsonAsync($"api/lagerbestand/{pos.Anfrage.ArtikelId}", neuerBestand);
             }
-
-            _context.Bestellungen.Add(bestellung);
-
-            // EF Core SaveChanges: alle Änderungen atomar in einer Transaktion
-            _context.SaveChanges();
 
             return bestellung.Id;
         }
     }
+
+    file record ArtikelAntwort(int Id, string Bezeichnung, decimal Verkaufspreis);
+    file record LagerbestandAntwort(int Id, int ArtikelId, int Menge, int Mindestbestand);
+    file record PruefPosition(BestellpositionAnfrageDto Anfrage, ArtikelAntwort Artikel, LagerbestandAntwort Lager);
 }

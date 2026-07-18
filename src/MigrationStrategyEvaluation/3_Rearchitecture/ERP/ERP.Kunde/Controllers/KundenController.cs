@@ -4,6 +4,8 @@ using KundeEntity = ERP.Data.Entitaeten.Kunde;
 
 namespace ERP.Api.Controllers
 {
+    [ApiController]
+    [Route("api/kunden")]
     public class KundenController : ControllerBase
     {
         private readonly KundeRepository _repository;
@@ -21,7 +23,7 @@ namespace ERP.Api.Controllers
         }
 
         // GET api/kunden/5
-        [HttpGet]
+        [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
             var kunde = _repository.FindById(id);

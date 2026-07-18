@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ERP.Api.Controllers
 {
+    [ApiController]
+    [Route("api/bestellungen")]
     public class BestellungenController : ControllerBase
     {
         private readonly BestellungRepository _repository;
@@ -16,15 +18,15 @@ namespace ERP.Api.Controllers
             _bestellabwicklung = bestellabwicklung;
         }
 
-        // GET api/bestellung
+        // GET api/bestellungen
         [HttpGet]
         public IActionResult Get()
         {
             return Ok(_repository.AlleBestellungen());
         }
 
-        // GET api/bestellung/5
-        [HttpGet]
+        // GET api/bestellungen/5
+        [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
             var bestellung = _repository.FindById(id);
@@ -33,9 +35,9 @@ namespace ERP.Api.Controllers
             return Ok(bestellung);
         }
 
-        // POST api/bestellung
+        // POST api/bestellungen
         [HttpPost]
-        public IActionResult Post([FromBody] BestellungAnfrageDto anfrage)
+        public async Task<IActionResult> Post([FromBody] BestellungAnfrageDto anfrage)
         {
             if (anfrage == null)
                 return BadRequest("Bestelldaten fehlen im Request-Body.");
@@ -44,8 +46,8 @@ namespace ERP.Api.Controllers
 
             try
             {
-                int bestellungId = _bestellabwicklung.BestellungAufgeben(anfrage);
-                return Created($"api/bestellung/{bestellungId}", new { id = bestellungId });
+                int bestellungId = await _bestellabwicklung.BestellungAufgeben(anfrage);
+                return Created($"api/bestellungen/{bestellungId}", new { id = bestellungId });
             }
             catch (KeyNotFoundException ex)
             {
@@ -58,6 +60,10 @@ namespace ERP.Api.Controllers
             catch (InvalidOperationException ex)
             {
                 return BadRequest(new { fehler = ex.Message });
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode(502, new { fehler = $"Fehler bei der Kommunikation mit einem Microservice: {ex.Message}" });
             }
         }
     }

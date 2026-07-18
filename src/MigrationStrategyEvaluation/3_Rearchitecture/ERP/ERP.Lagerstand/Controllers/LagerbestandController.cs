@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ERP.Api.Controllers
 {
+    [ApiController]
+    [Route("api/lagerbestand")]
     public class LagerbestandController : ControllerBase
     {
         private readonly LagerbestandRepository _repository;
@@ -12,19 +14,19 @@ namespace ERP.Api.Controllers
             _repository = lagerbestandRepository;
         }
 
-        // GET api/lager/5  (id = artikelId)
-        [HttpGet]
-        public IActionResult Get(int id)
+        // GET api/lagerbestand/{artikelId}
+        [HttpGet("{artikelId}")]
+        public IActionResult Get(int artikelId)
         {
-            var lagerbestand = _repository.FindByArtikelId(id);
+            var lagerbestand = _repository.FindByArtikelId(artikelId);
             if (lagerbestand == null)
                 return NotFound();
             return Ok(lagerbestand);
         }
 
-        // PUT api/lager/5  (id = artikelId)
-        [HttpPut]
-        public IActionResult Put(int id, [FromBody] LagerbestandUpdateDto dto)
+        // PUT api/lagerbestand/{artikelId}
+        [HttpPut("{artikelId}")]
+        public IActionResult Put(int artikelId, [FromBody] LagerbestandUpdateDto dto)
         {
             if (dto == null)
                 return BadRequest("Lagerbestandsdaten fehlen im Request-Body.");
@@ -33,7 +35,7 @@ namespace ERP.Api.Controllers
             if (dto.Mindestbestand < 0)
                 return BadRequest("Mindestbestand darf nicht negativ sein.");
 
-            var lagerbestand = _repository.FindByArtikelId(id);
+            var lagerbestand = _repository.FindByArtikelId(artikelId);
             if (lagerbestand == null)
                 return NotFound();
 
