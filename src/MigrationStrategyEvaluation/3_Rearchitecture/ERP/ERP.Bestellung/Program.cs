@@ -1,4 +1,8 @@
 
+using ERP.Bestellung.Repositories;
+using ERP.Bestellung.Services;
+using ERP.Data;
+
 namespace ERP.Bestellung;
 
 public class Program
@@ -11,18 +15,15 @@ public class Program
         // Add services to the container.
 
         builder.Services.AddControllers();
-        // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-        builder.Services.AddOpenApi();
+
+        builder.AddSqlServerDbContext<ErpContext>("erp");
+        builder.Services.AddScoped<BestellungRepository>();
+        builder.Services.AddScoped<Bestellabwicklung>();
 
         var app = builder.Build();
 
         app.MapDefaultEndpoints();
 
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
-            app.MapOpenApi();
-        }
 
         app.UseHttpsRedirection();
 

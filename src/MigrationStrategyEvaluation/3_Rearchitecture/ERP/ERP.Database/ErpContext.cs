@@ -9,6 +9,10 @@ namespace ERP.Data
         {
         }
 
+        public ErpContext(DbContextOptions<ErpContext> options) : base(options)
+        {
+        }
+
         public DbSet<Artikel> Artikel { get; set; }
         public DbSet<Kunde> Kunden { get; set; }
         public DbSet<Lagerbestand> Lagerbestaende { get; set; }

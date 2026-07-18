@@ -1,5 +1,5 @@
-
 using ERP.Artikel.Repositories;
+using ERP.Data;
 
 namespace ERP.Artikel;
 
@@ -14,6 +14,7 @@ public class Program
 
         builder.Services.AddControllers();
 
+        builder.AddSqlServerDbContext<ErpContext>("erp");
         builder.Services.AddScoped<ArtikelRepository>();
 
         var app = builder.Build();

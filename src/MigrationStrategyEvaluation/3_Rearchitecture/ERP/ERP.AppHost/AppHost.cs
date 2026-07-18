@@ -1,12 +1,44 @@
+using Aspire.Hosting.Azure;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
-var kunde = builder.AddProject<Projects.ERP_Kunde>("erp-kunde");
+IResourceBuilder<AzureSqlServerResource> sql;
 
-var artikel = builder.AddProject<Projects.ERP_Artikel>("erp-artikel");
+if (builder.ExecutionContext.IsPublishMode)
+{
+    var existingName = builder.AddParameter("existingSqlServerName");
+    var existingResourceGroup = builder.AddParameter("existingSqlServerResourceGroup");
 
-var lagerstand = builder.AddProject<Projects.ERP_Lagerstand>("erp-lagerstand");
+    sql = builder.AddAzureSqlServer("sql")
+        .AsExisting(existingName, existingResourceGroup);
+
+}
+else
+{
+    sql = builder.AddAzureSqlServer("sql")
+        .RunAsContainer(options =>
+        {
+            options.WithLifetime(ContainerLifetime.Persistent);
+        });
+}
+
+var erp = sql.AddDatabase("erp");
+
+var kunde = builder.AddProject<Projects.ERP_Kunde>("erp-kunde")
+    .WithReference(erp)
+    .WaitFor(erp);
+
+var artikel = builder.AddProject<Projects.ERP_Artikel>("erp-artikel")
+    .WithReference(erp)
+    .WaitFor(erp);
+
+var lagerstand = builder.AddProject<Projects.ERP_Lagerstand>("erp-lagerstand")
+    .WithReference(erp)
+    .WaitFor(erp);
 
 var bestellung = builder.AddProject<Projects.ERP_Bestellung>("erp-bestellung")
+    .WithReference(erp)
+    .WaitFor(erp)
     .WithReference(kunde)
     .WithReference(artikel)
     .WithReference(lagerstand);
@@ -14,10 +46,10 @@ var bestellung = builder.AddProject<Projects.ERP_Bestellung>("erp-bestellung")
 builder.AddYarp("erp-gateway")
     .WithConfiguration(yarp =>
     {
-        yarp.AddRoute("/api/lager/{**catch-all}", lagerstand);
-        yarp.AddRoute("/api/kunde/{**catch-all}", kunde);
+        yarp.AddRoute("/api/lagerbestand/{**catch-all}", lagerstand);
+        yarp.AddRoute("/api/kunden/{**catch-all}", kunde);
         yarp.AddRoute("/api/artikel/{**catch-all}", artikel);
-        yarp.AddRoute("/api/bestellung/{**catch-all}", bestellung);
+        yarp.AddRoute("/api/bestellungen/{**catch-all}", bestellung);
     });
 
 builder.Build().Run();

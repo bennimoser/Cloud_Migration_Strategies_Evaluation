@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="13.4.6" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ERP.Database\ERP.Database.csproj" />
     <ProjectReference Include="..\ERP.ServiceDefaults\ERP.ServiceDefaults.csproj" />
   </ItemGroup>
