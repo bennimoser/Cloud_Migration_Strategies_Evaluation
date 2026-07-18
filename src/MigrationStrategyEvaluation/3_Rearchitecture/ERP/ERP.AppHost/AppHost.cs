@@ -37,7 +37,7 @@ var artikel = builder.AddProject<Projects.ERP_Artikel>("erp-artikel")
     .WithReference(erp)
     .WaitFor(erp);
 
-var lagerstand = builder.AddProject<Projects.ERP_Lagerstand>("erp-lagerstand")
+var lagerstand = builder.AddProject<Projects.ERP_Lagerbestand>("erp-lagerbestand")
     .WithReference(erp)
     .WaitFor(erp);
 

@@ -17,7 +17,7 @@
     <Project Path="3_Rearchitecture/ERP/ERP.Bestellung/ERP.Bestellung.csproj" />
     <Project Path="3_Rearchitecture/ERP/ERP.Database/ERP.Database.csproj" Id="e7494334-5122-4a92-89ff-acb90ba43b99" />
     <Project Path="3_Rearchitecture/ERP/ERP.Kunde/ERP.Kunde.csproj" />
-    <Project Path="3_Rearchitecture/ERP/ERP.Lagerstand/ERP.Lagerstand.csproj" />
+    <Project Path="3_Rearchitecture/ERP/ERP.Lagerbestand/ERP.Lagerbestand.csproj" />
     <Project Path="3_Rearchitecture/ERP/ERP.ServiceDefaults/ERP.ServiceDefaults.csproj" />
   </Folder>
 </Solution>

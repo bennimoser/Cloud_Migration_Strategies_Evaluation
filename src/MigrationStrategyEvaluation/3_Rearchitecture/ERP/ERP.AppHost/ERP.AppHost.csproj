@@ -12,7 +12,7 @@
     <ProjectReference Include="..\ERP.Artikel\ERP.Artikel.csproj" />
     <ProjectReference Include="..\ERP.Bestellung\ERP.Bestellung.csproj" />
     <ProjectReference Include="..\ERP.Kunde\ERP.Kunde.csproj" />
-    <ProjectReference Include="..\ERP.Lagerstand\ERP.Lagerstand.csproj" />
+    <ProjectReference Include="..\ERP.Lagerstand\ERP.Lagerbestand.csproj" />
   </ItemGroup>
 
   <ItemGroup>
