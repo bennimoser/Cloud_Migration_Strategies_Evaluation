@@ -3,4 +3,10 @@
     <Project Path="0_On-Premises\ERP.Api\ERP.Api.csproj" />
     <Project Path="0_On-Premises\ERP.Data\ERP.Data.csproj" Id="3b9c6d4e-2f5a-5b3c-9d7e-8f0a1b2c3d4e" />
   </Folder>
+  <Folder Name="/1_Rehost/">
+    <Project Path="2_Replatform/ERP.Api/ERP.Api.csproj" />
+    <Project Path="2_Replatform/ERP.Data/ERP.Data.csproj" />
+  </Folder>
+  <Folder Name="/2_Replatform/" />
+  <Folder Name="/3_Rearchitecture/" />
 </Solution>
