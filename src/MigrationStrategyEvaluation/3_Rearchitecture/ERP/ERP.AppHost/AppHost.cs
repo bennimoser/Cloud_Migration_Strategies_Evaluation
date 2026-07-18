@@ -15,10 +15,15 @@ if (builder.ExecutionContext.IsPublishMode)
 }
 else
 {
+    var password = builder.AddParameter("sqlPassword", secret: true);
+
     sql = builder.AddAzureSqlServer("sql")
         .RunAsContainer(options =>
         {
             options.WithLifetime(ContainerLifetime.Persistent);
+            options.WithHostPort(1433);
+            options.WithContainerName("sql");
+            options.WithPassword(password);
         });
 }
 
