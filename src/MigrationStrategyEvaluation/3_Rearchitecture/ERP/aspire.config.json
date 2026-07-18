@@ -1,0 +1,5 @@
+{
+  "appHost": {
+    "path": "ERP.AppHost/ERP.AppHost.csproj"
+  }
+}
